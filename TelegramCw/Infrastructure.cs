@@ -31,5 +31,26 @@
             /// </summary>
             public const string JSON_FILE_NAME = "data.json";
         }
+
+        /// <summary>
+        /// Команды, передаваемые пользователем и обрабатываемые на сервере.
+        /// </summary>
+        public static class Commands
+        {
+            /// <summary>
+            /// Команда получения всех запущенных процессов.
+            /// </summary>
+            public const string GET_PROCESSES = "/get_processes";
+
+            /// <summary>
+            /// Команда выхода из системы.
+            /// </summary>
+            public const string UNLOG = "/unlog";
+
+            /// <summary>
+            /// Команда получения скриншота.
+            /// </summary>
+            public const string GET_SCREEN = "/get_screen";
+        }
     }
 }

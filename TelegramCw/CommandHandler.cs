@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -6,6 +9,8 @@ using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
 using File = System.IO.File;
 using System.Timers;
+using Telegram.Bot.Types.InputFiles;
+using TelegramCw.Tools;
 
 namespace TelegramCw
 {
@@ -82,7 +87,30 @@ namespace TelegramCw
                     
                     if (message?.Type == MessageType.Text)
                     {
-                        Console.WriteLine(message.Text);    
+                        var text = message.Text;
+                        var chatId = message.Chat.Id;
+                        switch (text)
+                        {
+                            case Infrastructure.Commands.GET_PROCESSES:
+                                var processes = ProcessesWorker.GetProcesses();
+                                await SendStrings(processes, chatId);
+                                break;
+                            
+                            case Infrastructure.Commands.UNLOG:
+                                SystemWorker.Unlog();
+                                await SendString("Произведен выход из системы!", chatId);
+                                break;
+                            
+                            //Тестовая шляпа для отправки изображений.
+                            case Infrastructure.Commands.GET_SCREEN:
+                                await SendImage(@"D:\Downloads\1534360092191335978.png", chatId);
+                                break;
+                            
+                            default:
+                                await SendString("Неизвестная команда. Попробуйте еще раз.", chatId);
+                                break;
+                        }
+                        
                     }
 
                     _data.updateOffset++;
@@ -130,13 +158,59 @@ namespace TelegramCw
                 var text = File.ReadAllText(_dataFilePath);
                 data = JsonConvert.DeserializeObject<SerializableData>(text);
             }
-            catch (JsonReaderException e)
+            catch (JsonException e)
             {
                 Console.WriteLine("Файл данных отсутствует. Все значения будут присвоены по-умолчанию.");
                 data = new SerializableData();
             }
 
             return data;
+        }
+
+        /// <summary>
+        /// Посылает строку.
+        /// </summary>
+        /// <param name="messageString">Строка сообщения.</param>
+        /// <param name="chatId">Идентификатор чата.</param>
+        private async Task SendString(string messageString, long chatId) =>
+            await _bot.SendTextMessageAsync(chatId, messageString);
+
+        /// <summary>
+        /// Посылает коллекцию строк.
+        /// </summary>
+        /// <param name="strings">Строки, которые необходимо послать.</param>
+        /// <param name="chatId">Идентификатор чата.</param>
+        private async Task SendStrings(IEnumerable<string> strings,  long chatId)
+        {
+            var messageText = string.Empty;
+
+            foreach (var s in strings)
+            {
+                var tmpMessageText = messageText + s + "\n";;
+
+                //Макс. длина сообщения в ТГ.
+                if (tmpMessageText.Length > 4096)
+                {
+                    await _bot.SendTextMessageAsync(chatId, messageText);
+                    messageText = string.Empty;
+                }
+                
+                messageText += s + "\n";
+            }
+
+            await _bot.SendTextMessageAsync(chatId, messageText);
+        }
+
+        /// <summary>
+        /// Посылает изображение.
+        /// </summary>
+        /// <param name="filePath">Путь к файлу.</param>
+        /// <param name="chatId">Идентификатор чата.</param>
+        private async Task SendImage(string filePath, long chatId)
+        {
+            await using var fileStream = File.Open(filePath, FileMode.Open);
+            var onlineFile = new InputOnlineFile(fileStream);
+            await _bot.SendPhotoAsync(chatId, onlineFile);
         }
     }
 }

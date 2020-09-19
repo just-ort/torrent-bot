@@ -10,7 +10,7 @@ namespace TelegramCw
             var commandHandler = new CommandHandler();
             
             //TODO: поменять время.
-            commandHandler.CreateBackup(30);
+            commandHandler.CreateBackup(5);
             
             await commandHandler.CheckForUpdates();
         }
