@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -103,7 +102,10 @@ namespace TelegramCw
                             
                             //Тестовая шляпа для отправки изображений.
                             case Infrastructure.Commands.GET_SCREEN:
-                                await SendImage(@"D:\Downloads\1534360092191335978.png", chatId);
+                                //Пока работает некорректно.
+                                var stream = ImagesWorker.GetScreenshot();
+                                await SendImage(stream, chatId);
+                                //stream.Close();
                                 break;
                             
                             default:
@@ -206,10 +208,12 @@ namespace TelegramCw
         /// </summary>
         /// <param name="filePath">Путь к файлу.</param>
         /// <param name="chatId">Идентификатор чата.</param>
-        private async Task SendImage(string filePath, long chatId)
+        private async Task SendImage(MemoryStream stream, long chatId)
         {
-            await using var fileStream = File.Open(filePath, FileMode.Open);
-            var onlineFile = new InputOnlineFile(fileStream);
+            //Пока не работает, говорит, что изображение пустое.
+            //Не хочу делать, через сохранение на диск, потому ебусь пока так.
+            //await using var fileStream = File.Open(filePath, FileMode.Open);
+            var onlineFile = new InputOnlineFile(stream);
             await _bot.SendPhotoAsync(chatId, onlineFile);
         }
     }
