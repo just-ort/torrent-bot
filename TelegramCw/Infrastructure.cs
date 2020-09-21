@@ -29,7 +29,7 @@
             /// <summary>
             /// Имя файла, хранящего в себе некоторую информацию, необходимую для процесса работы программы.
             /// </summary>
-            public const string JSON_FILE_NAME = "data.json";
+            public const string TMP_IMAGE_FILE_NAME = "image.png";
         }
 
         /// <summary>
@@ -51,6 +51,26 @@
             /// Команда получения скриншота.
             /// </summary>
             public const string GET_SCREEN = "/get_screen";
+            
+            /// <summary>
+            /// Команда получения снимка с камеры.
+            /// </summary>
+            public const string GET_CAM = "/get_cam";
+            
+            /// <summary>
+            /// Команда получения списка USB-устройств.
+            /// </summary>
+            public const string GET_USB = "/get_usb";
+
+            /// <summary>
+            /// Команда добавления процесса в список заблокированных.
+            /// </summary>
+            public const string ADD_BLOCK = "/add_block";
+
+            /// <summary>
+            /// Команда удаления процесса из списка заблокированных.
+            /// </summary>
+            public const string REMOVE_CLOCK = "/remove_block";
         }
     }
 }

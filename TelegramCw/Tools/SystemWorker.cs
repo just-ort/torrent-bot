@@ -22,7 +22,9 @@ namespace TelegramCw.Tools
         {
             if (!WTSDisconnectSession(WTS_CURRENT_SERVER_HANDLE,
                 WTS_CURRENT_SESSION, false))
-                throw new Win32Exception();
+            {
+                throw new Win32Exception();   
+            }
         }
     }
 }
