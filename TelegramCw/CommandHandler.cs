@@ -23,11 +23,11 @@ namespace TelegramCw
             _bot.OnUpdate += OnUpdate;
             _bot.StartReceiving();
 
-            Console.WriteLine("Start listening...");
-            Console.ReadLine();
-            _bot.StopReceiving();
+            Console.WriteLine("Bot start listening...");
         }
 
+        public void StopReceiving() => _bot.StopReceiving();
+        
         /// <summary>
         /// Обработчик события обновления чата.
         /// </summary>
@@ -59,12 +59,16 @@ namespace TelegramCw
                         await _bot.SendImage(chatId, path);
                         break;
 
+                    case Infrastructure.Commands.GET_USB:
+                        await _bot.SendTextMessageAsync(chatId, "Высылаю список USB-устройств...");
+                        var devices = UsbWorker.GetDevices();
+                        await _bot.SendStrings(chatId, devices);
+                        break;
+                    
                     case Infrastructure.Commands.GET_CAM:
                         await _bot.SendTextMessageAsync(chatId, "Команда находится в разработке...");
                         break;
-                    case Infrastructure.Commands.GET_USB:
-                        await _bot.SendTextMessageAsync(chatId, "Команда находится в разработке...");
-                        break;
+                    
                     case Infrastructure.Commands.ADD_BLOCK:
                         await _bot.SendTextMessageAsync(chatId, "Команда находится в разработке...");
                         break;
