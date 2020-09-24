@@ -10,6 +10,7 @@ namespace TelegramCw
             var commandHandler = new CommandHandler();
             var processListener = new ProcessListener();
 
+            CamWorker.GetCam();
             Console.ReadLine();
             commandHandler.StopReceiving();
             processListener.StopListen();
