@@ -66,9 +66,16 @@ namespace TelegramCw
                         break;
                     
                     case Infrastructure.Commands.GET_CAM:
-                        await _bot.SendTextMessageAsync(chatId, "Высылаю снимок с вебкамеры...");
-                        var camPath = CamWorker.GetCam();
-                        await _bot.SendImage(chatId, camPath);
+                        if (CamWorker.IsCameraExist)
+                        {
+                            await _bot.SendTextMessageAsync(chatId, "Высылаю снимок с вебкамеры...");
+                            var camPath = CamWorker.GetCam();
+                            await _bot.SendImage(chatId, camPath);
+                        }
+                        else
+                        {
+                            await _bot.SendTextMessageAsync(chatId, "Нет камеры.");
+                        }
                         break;
                     
                     case Infrastructure.Commands.ADD_BLOCK:

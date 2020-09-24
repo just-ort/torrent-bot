@@ -1,5 +1,6 @@
 ﻿using AForge.Video;
 using AForge.Video.DirectShow;
+using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -9,35 +10,43 @@ namespace TelegramCw
 {
     public static class CamWorker
     {
+        public static bool IsCameraExist;
+
         private static VideoCaptureDevice _device;
 
-        private static string _filePath;
+        private static Bitmap _bitmap;
+
+        public static void Init()
+        {
+            var WebcamColl = new FilterInfoCollection(FilterCategory.VideoInputDevice);
+
+            if(WebcamColl.Count > 0)
+            {
+                IsCameraExist = true;
+
+                _device = new VideoCaptureDevice(WebcamColl[0].MonikerString);
+                _device.Start();
+                _device.NewFrame += new NewFrameEventHandler(Device_NewFrame);
+            }
+        }
 
         public static string GetCam()
         {
-            var WebcamColl = new FilterInfoCollection(FilterCategory.VideoInputDevice);
-            _device = new VideoCaptureDevice(WebcamColl[0].MonikerString);
-            _device.Start();
-            _device.NewFrame += new NewFrameEventHandler(Device_NewFrame);
-
-            return _filePath;
-        }
-
-        private static void Device_NewFrame(object sender, NewFrameEventArgs eventArgs)
-        {
-            var bitmap = (Bitmap)eventArgs.Frame.Clone();
-
             var filePath = GetFilePath();
 
-            var file = File.Open(filePath, FileMode.Create);
+            var file = File.Create(filePath);
 
-            
-            bitmap.Save(file, ImageFormat.Png);
+            _bitmap.Save(file, ImageFormat.Png);
 
             file.Close();
             _device.SignalToStop();
 
-            _filePath = filePath;
+            return filePath;
+        }
+
+        private static void Device_NewFrame(object sender, NewFrameEventArgs eventArgs)
+        {
+            _bitmap = (Bitmap)eventArgs.Frame.Clone();
         }
 
         private static string GetFilePath()
