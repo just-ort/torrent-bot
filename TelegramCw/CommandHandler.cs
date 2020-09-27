@@ -1,11 +1,14 @@
 ﻿using System;
+using System.IO;
+using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using TelegramCw.Extensions;
-using TelegramCw.Tools;
+using TorrentBot.Tools;
+using File = System.IO.File;
 
-namespace TelegramCw
+namespace TorrentBot
 {
     /// <summary>
     /// Класс, обрабатывающий поступающие через Telegram команды.
@@ -17,12 +20,30 @@ namespace TelegramCw
         /// </summary>
         private readonly TelegramBotClient _bot;
 
+        /// <summary>
+        /// Конфиг-данные.
+        /// </summary>
+        private Config _config;
+
         public CommandHandler()
         {
-            _bot = new TelegramBotClient(Infrastructure.Connection.CONNECTION_TOKEN);
+            _config = DataSerializer.Deserialize<Config>();
+
+            if (_config.BotId == null)
+            {
+                Console.Write("Введите id бота: ");
+                _config.BotId = Console.ReadLine();
+                
+                Console.Write("Введите путь для сохранения торрент-файлов: ");
+                _config.SaveFilePath = Console.ReadLine();
+                
+                DataSerializer.Serialize(_config);
+            }
+
+            _bot = new TelegramBotClient(_config.BotId);
             _bot.OnUpdate += OnUpdate;
             _bot.StartReceiving();
-
+            
             Console.WriteLine("Bot start listening...");
         }
 
@@ -34,61 +55,61 @@ namespace TelegramCw
         private async void OnUpdate(object? sender, UpdateEventArgs e)
         {
             var message = e.Update.Message;
+            var chatId = message.Chat.Id;
 
-            if (message.Type == MessageType.Text)
+            if (_config.ChatId == null || _config.ChatId == 0)
             {
-                var text = message.Text;
-                var chatId = message.Chat.Id;
+                _config.ChatId = chatId;
+                DataSerializer.Serialize(_config);
+            }
 
-                switch (text)
-                {
-                    case Infrastructure.Commands.GET_PROCESSES:
-                        await _bot.SendTextMessageAsync(chatId, "Высылаю список процессов...");
-                        var processes = ProcessesWorker.GetProcesses();
-                        await _bot.SendStrings(chatId, processes);
-                        break;
+            switch (message.Type)
+            {
+                case MessageType.Document:
+                    var doc = message.Document;
+                    var result = await SaveFile(doc);
 
-                    case Infrastructure.Commands.UNLOG:
-                        SystemWorker.Unlog();
-                        await _bot.SendTextMessageAsync(chatId, "Произведен выход из системы!");
-                        break;
-
-                    case Infrastructure.Commands.GET_SCREEN:
-                        await _bot.SendTextMessageAsync(chatId, "Высылаю снимок экрана...");
-                        var path = ImagesWorker.GetScreenshot();
-                        await _bot.SendImage(chatId, path);
-                        break;
-
-                    case Infrastructure.Commands.GET_USB:
-                        await _bot.SendTextMessageAsync(chatId, "Высылаю список USB-устройств...");
-                        var devices = UsbWorker.GetDevices();
-                        await _bot.SendStrings(chatId, devices);
-                        break;
+                    var text = result
+                        ? $"Файл {doc.FileName} успешно загружен и сохранен."
+                        : $"Произошла ошибка. Проверьте сервер или попробуйте еще раз.";
                     
-                    case Infrastructure.Commands.GET_CAM:
-                        if (CamWorker.IsCameraExist)
-                        {
-                            await _bot.SendTextMessageAsync(chatId, "Высылаю снимок с вебкамеры...");
-                            var camPath = CamWorker.GetCam();
-                            await _bot.SendImage(chatId, camPath);
-                        }
-                        else
-                        {
-                            await _bot.SendTextMessageAsync(chatId, "Нет камеры.");
-                        }
-                        break;
-                    
-                    case Infrastructure.Commands.ADD_BLOCK:
-                        await _bot.SendTextMessageAsync(chatId, "Команда находится в разработке...");
-                        break;
-                    case Infrastructure.Commands.REMOVE_CLOCK:
-                        await _bot.SendTextMessageAsync(chatId, "Команда находится в разработке...");
-                        break;
+                    await _bot.SendTextMessageAsync(chatId, text);
+                    break;
+                
+                case MessageType.Text:
+                    await _bot.SendTextMessageAsync(chatId, "Обработка ссылок находится в разработке...");
+                    break;
+                
+                default:
+                    await _bot.SendTextMessageAsync(chatId, "Вы можете отправлять боту только документы или ссылки.");
+                    break;
+            }
+        }
 
-                    default:
-                        await _bot.SendTextMessageAsync(chatId, "Неизвестная команда. Попробуйте еще раз.");
-                        break;
-                }
+        /// <summary>
+        /// Загружает файл и сохраняет его на диск.
+        /// </summary>
+        /// <param name="doc">Загружаемый документ.</param>
+        private async Task<bool> SaveFile(Document doc)
+        {
+            var id = doc.FileId;
+            var filePath = Path.Combine(_config.SaveFilePath, doc.FileName);
+            var file = File.Create(filePath);
+
+            try
+            {
+                await _bot.GetInfoAndDownloadFileAsync(id, file);
+                return true;
+
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+
+            finally
+            {
+                file.Close();   
             }
         }
     }

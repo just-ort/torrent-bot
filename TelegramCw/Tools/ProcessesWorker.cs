@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 
-namespace TelegramCw.Tools
+namespace TorrentBot.Tools
 {
     /// <summary>
     /// Класс, выполняющий работу с процессами.

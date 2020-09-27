@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace TelegramCw
+namespace TorrentBot
 {
     class Program
     {
-        static async Task Main()
+        static void Main(string[] args)
         {
             var commandHandler = new CommandHandler();
-            var processListener = new ProcessListener();
-            CamWorker.Init();
-
             Console.ReadLine();
             commandHandler.StopReceiving();
-            processListener.StopListen();
         }
     }
 }
